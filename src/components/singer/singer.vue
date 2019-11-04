@@ -1,0 +1,83 @@
+<template lang="pug">
+    .singer()
+        ListView(:data='singerList')
+</template>
+<script>
+import { getSingerList } from '@/api/singer.js'
+import Singer from '@/common/js/singer'
+import ListView from '@/base/listview/listview'
+
+const HOT_SINGER_LEN = 10
+const HOT_NAME = '热门'
+
+export default {
+    data() {
+        return {
+            singerList: []
+        }
+    },
+    components: {
+        ListView
+    },
+    created() {
+        this._getSingerList()
+    },
+    methods: {
+        _getSingerList() {
+            getSingerList().then(res => {
+                this.singerList = this._normalizeSinger(res.list)
+                console.log(this.singerList = this._normalizeSinger(res.list))
+            })
+        },
+        _normalizeSinger(list) {
+            const map = {
+                hot: {
+                    title: HOT_NAME,
+                    items: []
+                }
+            }
+            list.map((item, index) => {
+                if (index < HOT_SINGER_LEN) {
+                    map.hot.items.push(new Singer({
+                        name: item.Fsinger_name,
+                        id: item.Fsinger_mid
+                    }))
+                }
+                const key = item.Findex
+                if (!map[key]) {
+                    map[key] = {
+                        title: key,
+                        items: []
+                    }
+                }
+                map[key].items.push(new Singer({
+                    name: item.Fsinger_name,
+                    id: item.Fsinger_mid
+                }))
+            })
+            // 这里是对map进行排序根据热门- a b c...的顺序
+            const ret = []
+            const hot = []
+            for (const key in map) {
+                const val = map[key]
+                if (val.title.match(/[a-zA-Z]/)) {
+                    ret.push(val)
+                } else if (val.title === HOT_NAME) {
+                    hot.push(val)
+                }
+            }
+            ret.sort((a, b) => {
+                return a.title.charCodeAt(0) - b.title.charCodeAt(0)
+            })
+            return hot.concat(ret)
+        }
+    }
+}
+</script>
+<style lang="stylus">
+    .singer
+        position: fixed
+        top: 88px
+        bottom: 0
+        width: 100%
+</style>
