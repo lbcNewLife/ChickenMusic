@@ -2,11 +2,16 @@
     .music-list
         .back
             i(class='icon-back')
-        h1(class='title')
-        .bg-image
+        h1(class='title', v-html='title')
+        .bg-image(:style='bgStyle', ref='bgImg')
             .filter
+        Scroll(class='list', :data='songs', ref='list')
+            .song-list-wrapper
+                SongList(:songs='songs')
 </template>
 <script>
+import Scroll from '@/base/scroll/scroll.vue'
+import SongList from '@/base/song-list/song-list.vue'
 export default {
     props: {
         bgImg: {
@@ -15,7 +20,7 @@ export default {
         },
         songs: {
             type: Array,
-            default: []
+            default: () => []
         },
         title: {
             type: String,
@@ -24,7 +29,20 @@ export default {
     },
     data() {
         return {}
-    }
+    },
+    components: {
+        Scroll,
+        SongList
+    },
+    computed: {
+        bgStyle() {
+            return `background-image: url(${this.bgImg})`
+        }
+    },
+    mounted() {
+        this.$refs.list.$el.style.top = `${this.$refs.bgImg.clientHeight}px`
+    },
+    methods: {}
 }
 </script>
 <style scoped lang="stylus" rel="stylesheet/stylus">
