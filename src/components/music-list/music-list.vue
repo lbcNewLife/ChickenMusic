@@ -5,13 +5,16 @@
         h1(class='title', v-html='title')
         .bg-image(:style='bgStyle', ref='bgImg')
             .filter
-        Scroll(class='list', :data='songs', ref='list')
+        .bg-layer(ref='layer')
+        Scroll(@scroll='scroll', class='list', :data='songs', ref='list', :probeType='probeType', :listenScroll='listenScroll')
             .song-list-wrapper
                 SongList(:songs='songs')
 </template>
 <script>
 import Scroll from '@/base/scroll/scroll.vue'
 import SongList from '@/base/song-list/song-list.vue'
+
+const RESOLVEHEIGHT = 40
 export default {
     props: {
         bgImg: {
@@ -28,7 +31,9 @@ export default {
         }
     },
     data() {
-        return {}
+        return {
+            scrollY: 0
+        }
     },
     components: {
         Scroll,
@@ -39,10 +44,38 @@ export default {
             return `background-image: url(${this.bgImg})`
         }
     },
-    mounted() {
-        this.$refs.list.$el.style.top = `${this.$refs.bgImg.clientHeight}px`
+    created() {
+        this.probeType = 3
+        this.listenScroll = true
     },
-    methods: {}
+    mounted() {
+        this.imageHeight = this.$refs.bgImg.clientHeight
+        this.minHeight = -this.imageHeight + RESOLVEHEIGHT
+        this.$refs.list.$el.style.top = `${this.imageHeight}px`
+    },
+    watch: {
+        scrollY(newY) {
+            const translateY = Math.max(this.minHeight, newY)
+            let zIndex = 0
+            this.$refs.layer.style['transform'] = `translate3d(0, ${translateY}px, 0)`
+            this.$refs.layer.style['webkitTransform'] = `translate3d(0, ${translateY}px, 0)`
+            if (newY < this.minHeight) {
+                zIndex = 10
+                this.$refs.bgImg.style.paddingTop = 0
+                this.$refs.bgImg.style.height = `${RESOLVEHEIGHT}px`
+            } else {
+                this.$refs.bgImg.style.paddingTop = '70%'
+                this.$refs.bgImg.style.height = 0
+            }
+            this.$refs.bgImg.style.zIndex = zIndex
+        }
+    },
+    methods: {
+        scroll(pos) {
+            console.log(pos)
+            this.scrollY = pos.y
+        }
+    }
 }
 </script>
 <style scoped lang="stylus" rel="stylesheet/stylus">
