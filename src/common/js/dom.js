@@ -19,3 +19,36 @@ export function getData(el, name, val) {
     }
     return el.getAttribute(perfix + name)
 }
+
+// 这里是做的在js代码里面进行css操作的时候的兼容处理的
+const elementStyle = document.createElement('div').style
+
+const vendor = (() => {
+    const transformNames = {
+        webkit: 'webkitTransform',
+        Moz: 'MozTransform',
+        O: 'OTransform',
+        ms: 'msTransform',
+        standard: 'transform'
+    }
+
+    for (const key in transformNames) {
+        if (elementStyle[transformNames[key]] !== undefined) {
+            return key
+        }
+    }
+
+    return false
+})()
+
+export function prefixStyle(style) {
+    if (vendor === false) {
+        return false
+    }
+
+    if (vendor === 'standard') {
+        return style
+    }
+
+    return vendor + style.charAt(0).toUpperCase() + style.substr(1)
+}

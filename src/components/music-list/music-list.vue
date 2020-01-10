@@ -1,20 +1,31 @@
 <template lang="pug">
     .music-list
         .back
-            i(class='icon-back')
+            i(class='icon-back', @click='back')
         h1(class='title', v-html='title')
         .bg-image(:style='bgStyle', ref='bgImg')
-            .filter
+            .play-wrapper(v-show='songs.length')
+                .play(ref='playBtn')
+                    i(class='icon-play')
+                    span(class='text') 随机播放全部
+            .filter(ref='filter')
         .bg-layer(ref='layer')
         Scroll(@scroll='scroll', class='list', :data='songs', ref='list', :probeType='probeType', :listenScroll='listenScroll')
             .song-list-wrapper
                 SongList(:songs='songs')
+            .loading-container(v-show='!songs.length')
+                loading
 </template>
 <script>
 import Scroll from '@/base/scroll/scroll.vue'
 import SongList from '@/base/song-list/song-list.vue'
+import { prefixStyle } from '@/common/js/dom'
+import loading from '@/base/loading/loading'
 
 const RESOLVEHEIGHT = 40
+const transform = prefixStyle('transform')
+const backdrop = prefixStyle('backdrop-filter')
+
 export default {
     props: {
         bgImg: {
@@ -37,7 +48,8 @@ export default {
     },
     components: {
         Scroll,
-        SongList
+        SongList,
+        loading
     },
     computed: {
         bgStyle() {
@@ -57,23 +69,38 @@ export default {
         scrollY(newY) {
             const translateY = Math.max(this.minHeight, newY)
             let zIndex = 0
-            this.$refs.layer.style['transform'] = `translate3d(0, ${translateY}px, 0)`
-            this.$refs.layer.style['webkitTransform'] = `translate3d(0, ${translateY}px, 0)`
+            let scale = 1
+            let blur = 0
+            const percent = Math.abs(newY / this.imageHeight)
+            this.$refs.layer.style[transform] = `translate3d(0, ${translateY}px, 0)`
+            if (newY > 0) {
+                scale = percent + 1
+                zIndex = 10
+            } else {
+                blur = Math.min(20 * percent, 20)
+            }
+            // 这里是模糊效果，但是目前只在Ios下面有，普通安卓手机可能没有
+            this.$refs.filter.style[backdrop] = `blur(${blur})`
             if (newY < this.minHeight) {
                 zIndex = 10
                 this.$refs.bgImg.style.paddingTop = 0
                 this.$refs.bgImg.style.height = `${RESOLVEHEIGHT}px`
+                this.$refs.playBtn.style.display = 'none'
             } else {
                 this.$refs.bgImg.style.paddingTop = '70%'
                 this.$refs.bgImg.style.height = 0
+                this.$refs.playBtn.style.display = ''
             }
             this.$refs.bgImg.style.zIndex = zIndex
+            this.$refs.bgImg.style[transform] = `scale(${scale})`
         }
     },
     methods: {
         scroll(pos) {
-            console.log(pos)
             this.scrollY = pos.y
+        },
+        back() {
+            this.$router.back()
         }
     }
 }
